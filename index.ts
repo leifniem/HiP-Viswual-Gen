@@ -100,11 +100,14 @@ function drawElement({ x, y, canvas, occupationMap }: { x: number, y: number, ca
       y: y - length,
       subtractHalfCircle: false,
     })
+    const gradient = canvas.gradient("linear", (add) => {
+      add.stop({ offset: 0, color: colors[random(colors.length)] })
+      add.stop({ offset: 1, color: colors[random(colors.length)] })
+    })
     canvas.line(posX, posY, endX, endY).stroke({
-      color: colors[random(colors.length)],
       width: circleSize,
       linecap: "round"
-    })
+    }).attr({ "stroke": gradient })
   } else {
     // Circle
     const { posX, posY } = calcPosition({ x, y })
