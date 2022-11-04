@@ -89,6 +89,7 @@ function calcPosition({ x, y, subtractHalfCircle = true }) {
 }
 
 function drawElement({ x, y, canvas, occupationMap }: { x: number, y: number, canvas: Svg, occupationMap: Record<number, number[]> }) {
+  const color1 = colord(colors[random(colors.length)])
   if (random.random() < lineChance && x != numElements.x - 1 && y != 0) {
     // Line
     let length = random.intBetween(2, maxLineLength);
@@ -101,8 +102,10 @@ function drawElement({ x, y, canvas, occupationMap }: { x: number, y: number, ca
       subtractHalfCircle: false,
     })
     const gradient = canvas.gradient("linear", (add) => {
-      add.stop({ offset: 0, color: colors[random(colors.length)] })
-      add.stop({ offset: 1, color: colors[random(colors.length)] })
+      const color3 = colord(colors[random(colors.length)])
+      // const color2 = colord({ l: color1., c:, h })
+      add.stop({ offset: 0, color: color1.toHex() })
+      add.stop({ offset: 1, color: color3.toHex() })
     })
     canvas.line(posX, posY, endX, endY).stroke({
       width: circleSize,
@@ -113,7 +116,7 @@ function drawElement({ x, y, canvas, occupationMap }: { x: number, y: number, ca
     const { posX, posY } = calcPosition({ x, y })
     canvas
       .circle(circleSize)
-      .fill(colors[random(colors.length)])
+      .fill("#333")
       .move(posX, posY)
   }
 }
