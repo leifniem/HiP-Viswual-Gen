@@ -50,8 +50,8 @@ const configLimits = {
   lineChance: {min: 0, max: 1, step: 0.05},
   colorsPerLine: {min: 1, max: 25, step: 1},
   maxLineLength: {min: 2, max: 20, step: 1},
-  overrideXCount: {min: 2, max: 100, step: 1},
-  overrideYCount: {min: 2, max: 100, step: 1},
+  overrideXCount: {max: 100, step: 1},
+  overrideYCount: {max: 100, step: 1},
 }
 
 const colors = [
@@ -179,7 +179,7 @@ function render(configParams: Config) {
 
 const pane = new Pane()
 for (const key in config) {
-  pane.addInput(config, key as keyof Config)
+  pane.addInput(config, key as keyof Config, configLimits[key] ?? {})
 }
 
 pane.on('change', (e) => {
