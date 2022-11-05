@@ -6,6 +6,7 @@ import RandomGen from "random-seed"
 interface Config {
   canvas?: Svg;
   seed?: string;
+  keepSeed: boolean;
   width: number;
   height: number;
   circleSize: number;
@@ -24,6 +25,7 @@ interface Config {
 
 let config: Config = {
   seed: "",
+  keepSeed: false,
   width: 800,
   height: 800,
   padding: 100,
@@ -40,7 +42,16 @@ let config: Config = {
 }
 
 const configLimits = {
-
+  width: {min: 500, max: 5000, step: 50},
+  height: {min: 500, max: 5000, step: 50},
+  circleSize: {min: 1, max: 40, step: 1},
+  padding: {min: 0, max: 500, step: 10},
+  stepSize: {min: 5, max: 500, step: 5},
+  lineChance: {min: 0, max: 1, step: 0.05},
+  colorsPerLine: {min: 1, max: 25, step: 1},
+  maxLineLength: {min: 2, max: 20, step: 1},
+  overrideXCount: {min: 2, max: 100, step: 1},
+  overrideYCount: {min: 2, max: 100, step: 1},
 }
 
 const colors = [
@@ -80,7 +91,7 @@ function calcPosition({ x, y, padding, numElements, reducedDims, subtractHalfCir
 function drawElement({ x, y, canvas, occupationMap, random, lineChance, lineLengthLimit, numElements, padding, circleSize, limitLinesToGrid, lineOverlap, colorsPerLine, coloredDots, reducedDims }: Config &{ x: number, y: number, occupationMap: number[][], random: RandomGen, lineLengthLimit: number, numElements: {x: number, y: number}, reducedDims: {width:number, height: number, halfCircle: number} }) {
 
   if (occupationMap[x].includes(y) || !canvas) return
-  if (random.random() < lineChance! && x != numElements.x - 1 && y != 0) {
+  if (random.random() < lineChance! && x != numElements.x && y != 0) {
     // Line
     let length = random.intBetween(2, lineLengthLimit);
     const { posX, posY } = calcPosition({ x, y, subtractHalfCircle: false, padding, numElements, reducedDims})
@@ -166,23 +177,23 @@ function render(configParams: Config) {
   }
 }
 
-SVGOn(document, "DOMContentLoaded", function () {
+const pane = new Pane()
+for (const key in config) {
+  pane.addInput(config, key as keyof Config)
+}
+
+pane.on('change', (e) => {
+  pane.refresh()
   render(config)
 })
-
-const pane = new Pane()
-
-for (const key in config) {
-  const input = pane.addInput(config, key as keyof Config)
-  input.on('change', () => {
-    render(config)
-  })
-}
 
 const regenButton = pane.addButton({ title: "Regenerate" })
 regenButton.on("click", () => {
+  if (!config.keepSeed) config.seed = RandomGen.create().string(16)
   render(config)
+  pane.refresh()
 })
+
 
 const exportButton = pane.addButton({ title: "Export Settings" })
 exportButton.on('click', () => {
@@ -213,4 +224,9 @@ saveButton.on('click', () => {
     document.body.removeChild(link);
     window.URL.revokeObjectURL(url);
   }, 0)
+})
+
+SVGOn(document, "DOMContentLoaded", function () {
+  render(config)
+  pane.refresh()
 })
