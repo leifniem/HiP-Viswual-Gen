@@ -180,7 +180,9 @@ for (const key in config) {
 }
 
 const regenButton = pane.addButton({ title: "Regenerate" })
-regenButton.on("click", render)
+regenButton.on("click", () => {
+  render(config)
+})
 
 const exportButton = pane.addButton({ title: "Export Settings" })
 exportButton.on('click', () => {
