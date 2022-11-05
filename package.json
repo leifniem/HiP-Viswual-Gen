@@ -4,7 +4,8 @@
   "description": "Generates Key visual for Hacking in Parallel Event",
   "main": "index.js",
   "scripts": {
-    "dev": "vite"
+    "dev": "vite",
+    "build": "vite build"
   },
   "author": "Leif Niemczik",
   "license": "ISC",
