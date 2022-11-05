@@ -10,8 +10,10 @@
   "license": "ISC",
   "dependencies": {
     "@svgdotjs/svg.js": "^3.1.2",
+    "@tweakpane/core": "^1.1.0",
     "colord": "^2.9.3",
-    "random-seed": "^0.3.0"
+    "random-seed": "^0.3.0",
+    "tweakpane": "^3.1.0"
   },
   "devDependencies": {
     "vite": "^3.2.2"
