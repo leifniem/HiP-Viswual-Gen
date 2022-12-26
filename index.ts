@@ -21,23 +21,29 @@ interface Config {
   whiteBackground?: boolean;
   overrideXCount?: number;
   overrideYCount?: number;
+  centerCutoutWidth: number;
+  centerCutoutHeight: number;
 }
 
 let config: Config = {
   seed: "",
   keepSeed: false,
-  width: 800,
-  height: 800,
+  width: 1950,
+  height: 1050,
   padding: 100,
   circleSize: 10,
   stepSize: 50,
-  lineChance: .2,
+  // lineChance: .2,
+  lineChance: 1,
   whiteBackground: false,
   limitLinesToGrid: true,
   colorsPerLine: 3,
   coloredDots: true,
   overrideXCount: 0,
   overrideYCount: 0,
+  centerCutoutWidth: 18,
+  centerCutoutHeight: 10,
+  lineOverlap: false,
   // animate: false
 }
 
@@ -52,6 +58,8 @@ const configLimits = {
   maxLineLength: {min: 2, max: 20, step: 1},
   overrideXCount: {max: 100, step: 1},
   overrideYCount: {max: 100, step: 1},
+  centerCutoutWidth: {max: 100, step: 2},
+  centerCutoutHeight: {max: 100, step: 2},
 }
 
 const colors = [
@@ -88,19 +96,41 @@ function calcPosition({ x, y, padding, numElements, reducedDims, subtractHalfCir
   return pos
 }
 
-function drawElement({ x, y, canvas, occupationMap, random, lineChance, lineLengthLimit, numElements, padding, circleSize, limitLinesToGrid, lineOverlap, colorsPerLine, coloredDots, reducedDims }: Config &{ x: number, y: number, occupationMap: number[][], random: RandomGen, lineLengthLimit: number, numElements: {x: number, y: number}, reducedDims: {width:number, height: number, halfCircle: number} }) {
+function drawElement({ x, y, canvas, occupationMap, random, lineChance, lineLengthLimit, numElements, padding, circleSize, limitLinesToGrid, lineOverlap, colorsPerLine, coloredDots, reducedDims, lines, centerCutoutWidth, centerCutoutHeight }: Config &{ x: number, y: number, occupationMap: number[][], random: RandomGen, lineLengthLimit: number, numElements: {x: number, y: number}, lines: boolean, reducedDims: {width:number, height: number, halfCircle: number} }) {
+
+const cutoutBorders = {
+  left: numElements.x / 2 - centerCutoutWidth / 2,
+  right: numElements.x / 2 + centerCutoutWidth / 2,
+  top: numElements.y / 2 - centerCutoutHeight / 2,
+  bottom: numElements.y / 2 + centerCutoutHeight / 2,
+}
 
   if (occupationMap[x].includes(y) || !canvas) return
-  if (random.random() < lineChance! && x != numElements.x && y != 0) {
+  if (centerCutoutHeight > 0 || centerCutoutWidth > 0) {
+
+    if (x > cutoutBorders.left && x < cutoutBorders.right && y < cutoutBorders.bottom && y > cutoutBorders.top)
+    return
+  }
+  if (lines && random.random() < lineChance! && x != numElements.x && y != 0) {
     // Line
     let length = random.intBetween(2, lineLengthLimit);
     const { posX, posY } = calcPosition({ x, y, subtractHalfCircle: false, padding, numElements, reducedDims})
 
     if (limitLinesToGrid) {
-      const overshootX = x + length - numElements.x;
-      const overshootY = (y - length) * -1;
-      const overshoot = Math.max(overshootX, overshootY)
+      let overshootX = x + length - numElements.x;
+      let overshootY = (y - length) * -1;
+      let overshoot = Math.max(overshootX, overshootY)
       if (overshoot > 0) length -= overshoot
+
+      //cutout check
+      if (x < cutoutBorders.right && y > cutoutBorders.top && x + length > cutoutBorders.left && y - length < cutoutBorders.bottom) {
+        overshootX = (x + length - cutoutBorders.left) * -1
+        overshootY = (y - length - cutoutBorders.bottom -1) * -1
+
+        let overshoot = Math.max(overshootX, overshootY)
+        if (overshoot > 0) length -= Math.floor(overshoot)
+        if (length < 1) return;
+      }
     }
 
     const { posX: endX, posY: endY } = calcPosition({
@@ -137,7 +167,7 @@ function drawElement({ x, y, canvas, occupationMap, random, lineChance, lineLeng
       .circle(circleSize)
       .fill(coloredDots ? colors[random(colors.length)] : "#333")
       .move(posX, posY)
-    occupationMap[x].push(y)
+    // occupationMap[x].push(y)
   }
 }
 
@@ -172,12 +202,18 @@ function render(configParams: Config) {
 
   for (let x = 0; x <= numElements.x; x++) {
     for (let y = 0; y <= numElements.y; y++) {
-      drawElement({ x, y, occupationMap, random, numElements, lineLengthLimit, reducedDims, ...config })
+      drawElement({ x, y, occupationMap, random, numElements, lineLengthLimit, reducedDims, lines: false,  ...config })
+    }
+  }
+
+  for (let x = 0; x <= numElements.x; x++) {
+    for (let y = 0; y <= numElements.y; y++) {
+      drawElement({ x, y, occupationMap, random, numElements, lineLengthLimit, reducedDims, lines: true,  ...config })
     }
   }
 }
 
-const pane = new Pane()
+const pane = new Pane({title: "parameters", expanded: false})
 for (const key in config) {
   pane.addInput(config, key as keyof Config, configLimits[key] ?? {})
 }
